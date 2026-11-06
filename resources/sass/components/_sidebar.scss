@@ -1,0 +1,97 @@
+// Navegación lateral: estados hover, focus-visible, active y página actual.
+
+.sidebar-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .625rem 1rem .625rem 1.125rem;
+    border-radius: $border-radius;
+    color: $body-color;
+    font-weight: 500;
+    text-decoration: none;
+    transition:
+        background-color .2s ease-in-out,
+        color .2s ease-in-out,
+        box-shadow .2s ease-in-out,
+        transform .15s ease-in-out;
+
+    // Indicador vertical que aparece al pasar el cursor
+    &::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 25%;
+        height: 50%;
+        width: 4px;
+        border-radius: 0 4px 4px 0;
+        background-color: $primary;
+        transform: scaleY(0);
+        transition: transform .2s ease-in-out;
+    }
+
+    &__icon {
+        font-size: 1.1rem;
+        transition: transform .2s ease-in-out, color .2s ease-in-out;
+    }
+
+    // Hover (solo en opciones no activas)
+    &:not(.is-active):hover {
+        background-color: rgba($primary, .08);
+        color: $primary;
+
+        &::before {
+            transform: scaleY(1);
+        }
+
+        .sidebar-link__icon {
+            color: $primary;
+            transform: translateX(2px) scale(1.12);
+        }
+    }
+
+    // Focus con teclado: anillo de Bootstrap, sin ring al hacer clic con el ratón
+    &:focus {
+        outline: 0;
+    }
+
+    &:focus-visible {
+        box-shadow:
+            var(--bs-focus-ring-x, 0) var(--bs-focus-ring-y, 0)
+            var(--bs-focus-ring-blur, 0) var(--bs-focus-ring-width, 0.25rem)
+            var(--bs-focus-ring-color, rgba(13, 110, 253, .25));
+    }
+
+    // Pulsación
+    &:active {
+        transform: scale(.97);
+    }
+
+    // Página actual
+    &.is-active {
+        background-color: $primary;
+        color: $white;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba($primary, .35);
+
+        .sidebar-link__icon {
+            color: $white;
+        }
+
+        &:hover {
+            background-color: shade-color($primary, 10%);
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sidebar-link,
+    .sidebar-link::before,
+    .sidebar-link__icon {
+        transition: none;
+    }
+
+    .sidebar-link:active {
+        transform: none;
+    }
+}
