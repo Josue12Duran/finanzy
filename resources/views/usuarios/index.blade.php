@@ -5,7 +5,59 @@
         </a>
     </x-layout.page-header>
 
-    <x-ui.data-table :headers="['Nombre', 'Correo electrónico', 'Rol', 'Estado', 'Acciones']" :is-empty="$usuarios->isEmpty()" empty="No hay usuarios registrados.">
+    @php
+        $hayFiltros = collect($filtros)->filter(fn ($valor) => filled($valor))->isNotEmpty();
+    @endphp
+
+    <form method="GET" action="{{ route('usuarios.index') }}" class="card card-body border-0 shadow-sm mb-4" novalidate>
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-6 col-xl-4">
+                <label for="q" class="form-label fw-semibold small">Buscar</label>
+                <input type="search" id="q" name="q" value="{{ old('q', $filtros['q'] ?? '') }}"
+                       placeholder="Nombre o correo electrónico"
+                       class="form-control @error('q') is-invalid @enderror">
+                @error('q')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-2">
+                <label for="rol" class="form-label fw-semibold small">Rol</label>
+                <select id="rol" name="rol" class="form-select @error('rol') is-invalid @enderror">
+                    <option value="">Todos los roles</option>
+                    @foreach ($roles as $rol)
+                        <option value="{{ $rol }}" @selected(old('rol', $filtros['rol'] ?? '') === $rol)>{{ $rol }}</option>
+                    @endforeach
+                </select>
+                @error('rol')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-2">
+                <label for="estado" class="form-label fw-semibold small">Estado</label>
+                <select id="estado" name="estado" class="form-select @error('estado') is-invalid @enderror">
+                    <option value="">Todos los estados</option>
+                    <option value="activo" @selected(old('estado', $filtros['estado'] ?? '') === 'activo')>Activo</option>
+                    <option value="inactivo" @selected(old('estado', $filtros['estado'] ?? '') === 'inactivo')>Inactivo</option>
+                </select>
+                @error('estado')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="col-12 col-xl-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-grow-1">
+                    <i class="bi bi-funnel"></i> Filtrar
+                </button>
+                <a href="{{ route('usuarios.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros" aria-label="Limpiar filtros">
+                    <i class="bi bi-brush"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <x-ui.data-table :headers="['Nombre', 'Correo electrónico', 'Rol', 'Estado', 'Acciones']" :is-empty="$usuarios->isEmpty()" :empty="$hayFiltros ? 'No hay usuarios que coincidan con los filtros.' : 'No hay usuarios registrados.'">
         @foreach ($usuarios as $usuario)
             @php
                 $rol = $usuario->roles->first()?->name;
@@ -76,8 +128,11 @@
         </x-ui.modal>
     @endforeach
 
-    @if ($usuarios->hasPages())
-        <div class="d-flex justify-content-end mt-3">
+    @if ($usuarios->total() > 0)
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 mt-3">
+            <span class="small text-muted">
+                Mostrando {{ $usuarios->firstItem() }} a {{ $usuarios->lastItem() }} de {{ $usuarios->total() }} usuarios
+            </span>
             {{ $usuarios->links('pagination::bootstrap-5') }}
         </div>
     @endif

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\FiltrarUsuariosRequest;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use App\Services\AuditLogger;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,13 +17,39 @@ use Illuminate\View\View;
 
 class UserController extends Controller
 {
-    public function index(): View
+    public function index(FiltrarUsuariosRequest $request): View
     {
-        $usuarios = User::with('roles')
-            ->orderBy('name')
-            ->paginate(10);
+        $filtros = $request->validated();
 
-        return view('usuarios.index', compact('usuarios'));
+        $usuarios = User::query()
+            ->with('roles')
+            ->when(
+                $filtros['q'] ?? null,
+                function (Builder $consulta, string $termino) {
+                    $patron = '%'.addcslashes($termino, '%_\\').'%';
+
+                    $consulta->where(fn (Builder $sub) => $sub
+                        ->where('name', 'like', $patron)
+                        ->orWhere('email', 'like', $patron));
+                },
+            )
+            ->when(
+                $filtros['rol'] ?? null,
+                fn (Builder $consulta, string $rol) => $consulta->whereHas('roles', fn (Builder $roles) => $roles->where('name', $rol)),
+            )
+            ->when(
+                $filtros['estado'] ?? null,
+                fn (Builder $consulta, string $estado) => $consulta->where('activo', $estado === 'activo'),
+            )
+            ->orderBy('name')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('usuarios.index', [
+            'usuarios' => $usuarios,
+            'filtros' => $filtros,
+            'roles' => User::ROLES,
+        ]);
     }
 
     public function create(): View
