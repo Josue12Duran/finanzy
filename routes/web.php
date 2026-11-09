@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -34,9 +35,7 @@ Route::middleware(['auth', 'role:Administrador'])->group(function () {
     Route::resource('usuarios', UserController::class)->except(['show', 'destroy']);
     Route::patch('usuarios/{usuario}/estado', [UserController::class, 'toggleStatus'])->name('usuarios.toggle-status');
 
-    Route::get('/bitacora', function () {
-        return view('bitacora.index');
-    })->name('bitacora.index');
+    Route::get('/bitacora', [ActivityLogController::class, 'index'])->name('bitacora.index');
 });
 
 Route::redirect('/home', '/dashboard')->name('home');
