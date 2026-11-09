@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/demo');
@@ -28,17 +29,27 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware('auth')->name('dashboard');
 
+Route::middleware(['auth', 'role:Administrador'])->group(function () {
+    Route::get('/usuarios', function () {
+        return view('usuarios.index');
+    })->name('usuarios.index');
+
+    Route::get('/bitacora', function () {
+        return view('bitacora.index');
+    })->name('bitacora.index');
+});
+
 Route::redirect('/home', '/dashboard')->name('home');
 
 Route::get('/demo', function () {
     return view('demo');
 })->name('demo');
 
-Route::post('/demo', function (\Illuminate\Http\Request $request) {
+Route::post('/demo', function (Request $request) {
     $request->validate([
         'descripcion' => ['required', 'string', 'max:255'],
-        'monto'       => ['required', 'numeric', 'min:0.01'],
-        'fecha'       => ['required', 'date'],
+        'monto' => ['required', 'numeric', 'min:0.01'],
+        'fecha' => ['required', 'date'],
         'categoria_id' => ['required', 'integer', 'in:1,2,3,4'],
     ], [], [
         'descripcion' => 'descripción',
