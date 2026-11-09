@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SendResetLinkRequest;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use Illuminate\View\View;
 
@@ -15,12 +15,8 @@ class ForgotPasswordController extends Controller
         return view('auth.passwords.email');
     }
 
-    public function sendResetLinkEmail(Request $request): RedirectResponse
+    public function sendResetLinkEmail(SendResetLinkRequest $request): RedirectResponse
     {
-        $request->validate([
-            'email' => ['required', 'email'],
-        ]);
-
         $estado = Password::sendResetLink($request->only('email'));
 
         return $estado === Password::RESET_LINK_SENT
