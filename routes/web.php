@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -30,9 +31,8 @@ Route::get('/dashboard', function () {
 })->middleware('auth')->name('dashboard');
 
 Route::middleware(['auth', 'role:Administrador'])->group(function () {
-    Route::get('/usuarios', function () {
-        return view('usuarios.index');
-    })->name('usuarios.index');
+    Route::resource('usuarios', UserController::class)->except(['show', 'destroy']);
+    Route::patch('usuarios/{usuario}/estado', [UserController::class, 'toggleStatus'])->name('usuarios.toggle-status');
 
     Route::get('/bitacora', function () {
         return view('bitacora.index');

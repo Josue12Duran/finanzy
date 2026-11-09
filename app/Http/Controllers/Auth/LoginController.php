@@ -57,6 +57,15 @@ class LoginController extends Controller
             ]);
         }
 
+        if (! Auth::user()->activo) {
+            // Credenciales válidas pero cuenta desactivada: no se inicia sesión.
+            Auth::guard()->logout();
+
+            throw ValidationException::withMessages([
+                'email' => ['Tu cuenta está desactivada. Contacta a un administrador.'],
+            ]);
+        }
+
         RateLimiter::clear($clave);
         $request->session()->regenerate();
 
