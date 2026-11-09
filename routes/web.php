@@ -6,7 +6,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\UserController;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreDemoRequest;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/demo');
@@ -44,16 +44,6 @@ Route::get('/demo', function () {
     return view('demo');
 })->name('demo');
 
-Route::post('/demo', function (Request $request) {
-    $request->validate([
-        'descripcion' => ['required', 'string', 'max:255'],
-        'monto' => ['required', 'numeric', 'min:0.01'],
-        'fecha' => ['required', 'date'],
-        'categoria_id' => ['required', 'integer', 'in:1,2,3,4'],
-    ], [], [
-        'descripcion' => 'descripción',
-        'categoria_id' => 'categoría',
-    ]);
-
+Route::post('/demo', function (StoreDemoRequest $request) {
     return redirect('/demo')->with('success', 'Registro de prueba validado correctamente (no se guardó en base de datos).');
 })->name('demo.store');
