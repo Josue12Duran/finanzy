@@ -51,7 +51,7 @@
                     <i class="bi bi-funnel"></i> Filtrar
                 </button>
                 <a href="{{ route('usuarios.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros" aria-label="Limpiar filtros">
-                    <i class="bi bi-brush"></i>
+                    <i class="bi bi-eraser"></i>
                 </a>
             </div>
         </div>

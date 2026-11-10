@@ -54,7 +54,7 @@
                     <i class="bi bi-funnel"></i> Filtrar
                 </button>
                 <a href="{{ route('bitacora.index') }}" class="btn btn-outline-secondary" title="Limpiar filtros" aria-label="Limpiar filtros">
-                    <i class="bi bi-brush"></i>
+                    <i class="bi bi-eraser"></i>
                 </a>
             </div>
         </div>
@@ -82,7 +82,7 @@
                     @endif
                 </td>
                 <td>
-                    <x-ui.badge type="light">{{ ucfirst($registro->module) }}</x-ui.badge>
+                    <x-ui.badge type="dark">{{ ucfirst($registro->module) }}</x-ui.badge>
                 </td>
                 <td>
                     <x-ui.badge :type="$tipoAccion">{{ ucfirst($registro->action) }}</x-ui.badge>
