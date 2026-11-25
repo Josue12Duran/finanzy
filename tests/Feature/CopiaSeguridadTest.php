@@ -55,14 +55,26 @@ class CopiaSeguridadTest extends TestCase
         $this->actingAs($administrador)
             ->get('/copias-seguridad')
             ->assertOk()
-            ->assertSee('Generar y descargar copia');
+            ->assertSee('Generar y descargar copia')
+            ->assertSee('name="download_token"', false)
+            ->assertSee('backup-download-frame', false)
+            ->assertSee('backup-loading-overlay', false);
 
         $rutaRespaldo = null;
+        $downloadToken = '11111111-1111-4111-8111-111111111111';
 
         try {
-            $respuesta = $this->actingAs($administrador)->post('/copias-seguridad/descargar');
+            $respuesta = $this->actingAs($administrador)->post('/copias-seguridad/descargar', [
+                'download_token' => $downloadToken,
+            ]);
 
             $respuesta->assertDownload();
+            $cookie = collect($respuesta->baseResponse->headers->getCookies())
+                ->first(fn ($cookie) => $cookie->getName() === 'backup_download_started');
+
+            $this->assertNotNull($cookie);
+            $this->assertSame($downloadToken, $cookie->getValue());
+            $this->assertFalse($cookie->isHttpOnly());
 
             $rutaRespaldo = $respuesta->baseResponse->getFile()->getPathname();
             $contenido = file_get_contents($rutaRespaldo);

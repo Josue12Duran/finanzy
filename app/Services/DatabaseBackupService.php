@@ -16,7 +16,7 @@ class DatabaseBackupService
         File::ensureDirectoryExists($directory, 0700);
 
         $path = $directory.DIRECTORY_SEPARATOR
-            .'finanzy-backup-'.now()->format('Ymd-His').'-'.Str::uuid().'.sql';
+            .'finanzy-backup-'.now()->format('Ymd-His').'.sql';
         $stream = fopen($path, 'xb');
 
         if (! is_resource($stream)) {

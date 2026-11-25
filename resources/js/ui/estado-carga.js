@@ -91,6 +91,10 @@ export function registrarEstadoDeCarga(documento = document, ventana = window) {
         ventana.setTimeout(() => desactivarCarga(enlace), DURACION_ENLACE_MS);
     });
 
+    documento.addEventListener('finanzy:loading-complete', (evento) => {
+        desactivarCarga(evento.target);
+    });
+
     ventana.addEventListener('pageshow', (evento) => {
         if (evento.persisted) {
             documento.querySelectorAll('[data-cargando="true"]').forEach((elemento) => desactivarCarga(elemento));

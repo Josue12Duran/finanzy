@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectUsersTo('/dashboard');
+        $middleware->encryptCookies(except: ['backup_download_started']);
 
         $middleware->appendToGroup('web', EnsureUserIsActive::class);
 
@@ -25,7 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
         ]);
-        //se agrega para confiar en proxy de render
+        // se agrega para confiar en proxy de render
         $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
