@@ -108,14 +108,22 @@ class CategoriasEjemploSeederTest extends TestCase
         $this->actingAs($empleado)->put(route('categorias.update', $transporte), [
             'nombre' => 'Transporte modificado',
             'tipo' => 'gasto',
-        ])->assertForbidden();
-        $this->actingAs($empleado)->delete(route('categorias.destroy', $transporte))->assertForbidden();
+        ])->assertRedirect(route('categorias.index'));
         $this->assertDatabaseHas('categorias', [
             'id' => $transporte->id,
             'user_id' => $transporte->user_id,
-            'nombre' => 'Transporte',
+            'nombre' => 'Transporte modificado',
             'tipo' => 'gasto',
         ]);
+        $this->actingAs($empleado)->put(route('categorias.update', $transporte), [
+            'nombre' => 'Transporte',
+            'tipo' => 'gasto',
+        ])->assertRedirect(route('categorias.index'));
+
+        // Con movimientos asociados no se elimina, sin importar quién lo intente.
+        $this->actingAs($empleado)->delete(route('categorias.destroy', $transporte))
+            ->assertSessionHas('error', 'No se puede eliminar una categoría con movimientos asociados.');
+        $this->assertModelExists($transporte);
     }
 
     public function test_sin_administrador_inicial_informa_la_dependencia_sin_crear_registros(): void
