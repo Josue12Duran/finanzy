@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
+use Spatie\Permission\Models\Role;
 
 class RegisterController extends Controller
 {
@@ -28,6 +29,9 @@ class RegisterController extends Controller
             'email' => $datos['email'],
             'password' => Hash::make($datos['password']),
         ]);
+
+        // Todo usuario que se registra por cuenta propia recibe el rol Empleado.
+        $user->assignRole(Role::findOrCreate('Empleado', 'web'));
 
         event(new Registered($user));
 

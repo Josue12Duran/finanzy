@@ -126,6 +126,21 @@ class AutenticacionTest extends TestCase
         $this->assertAuthenticatedAs($usuario);
     }
 
+    public function test_registro_asigna_rol_empleado(): void
+    {
+        $this->post('/register', [
+            'name' => 'Luis Gómez',
+            'email' => 'luis@example.com',
+            'password' => 'NuevaClave123',
+            'password_confirmation' => 'NuevaClave123',
+        ])->assertRedirect('/dashboard');
+
+        $usuario = User::where('email', 'luis@example.com')->firstOrFail();
+
+        $this->assertTrue($usuario->hasRole('Empleado'));
+        $this->assertSame(['Empleado'], $usuario->getRoleNames()->all());
+    }
+
     public function test_registro_con_correo_duplicado_falla(): void
     {
         User::factory()->create(['email' => 'repetido@example.com']);
