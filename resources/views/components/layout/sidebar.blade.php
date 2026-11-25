@@ -17,6 +17,7 @@
     $modulosAdministracion = [
         ['clave' => 'usuarios', 'ruta' => 'usuarios.index', 'etiqueta' => 'Usuarios', 'icono' => 'bi-people'],
         ['clave' => 'bitacora', 'ruta' => 'bitacora.index', 'etiqueta' => 'Bitácora', 'icono' => 'bi-journal-text'],
+        ['clave' => 'copias-seguridad', 'ruta' => 'copias-seguridad.index', 'etiqueta' => 'Copias de seguridad', 'icono' => 'bi-database'],
     ];
 @endphp
 

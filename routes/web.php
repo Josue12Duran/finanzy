@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\CopiaSeguridadController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExportarReporteController;
 use App\Http\Controllers\MovimientoController;
@@ -64,6 +65,8 @@ Route::middleware(['auth', 'role:Administrador'])->group(function () {
     Route::patch('usuarios/{usuario}/estado', [UserController::class, 'toggleStatus'])->name('usuarios.toggle-status');
 
     Route::get('/bitacora', [ActivityLogController::class, 'index'])->name('bitacora.index');
+    Route::get('/copias-seguridad', [CopiaSeguridadController::class, 'index'])->name('copias-seguridad.index');
+    Route::post('/copias-seguridad/descargar', [CopiaSeguridadController::class, 'download'])->name('copias-seguridad.download');
 });
 
 Route::redirect('/home', '/dashboard')->name('home');
