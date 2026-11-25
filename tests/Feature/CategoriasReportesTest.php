@@ -28,13 +28,55 @@ class CategoriasReportesTest extends TestCase
         $this->actingAs($user)->get(route('categorias.index'))->assertSee('Salario');
     }
 
-    public function test_usuario_no_puede_modificar_categoria_ajena(): void
+    public function test_cualquier_usuario_puede_modificar_y_eliminar_categoria_de_otro(): void
     {
-        $owner = User::factory()->create();
-        $other = User::factory()->create();
-        $categoria = Categoria::create(['user_id' => $owner->id, 'nombre' => 'Privada', 'tipo' => 'gasto']);
-        $this->actingAs($other)->put(route('categorias.update', $categoria), ['nombre' => 'Cambiada', 'tipo' => 'gasto'])->assertForbidden();
-        $this->actingAs($other)->delete(route('categorias.destroy', $categoria))->assertForbidden();
+        $creador = User::factory()->create();
+        $otro = User::factory()->create();
+        $categoria = Categoria::create(['user_id' => $creador->id, 'nombre' => 'Compartida', 'tipo' => 'gasto']);
+
+        $this->actingAs($otro)->put(route('categorias.update', $categoria), ['nombre' => 'Cambiada', 'tipo' => 'gasto'])
+            ->assertRedirect(route('categorias.index'));
+        $this->assertDatabaseHas('categorias', ['id' => $categoria->id, 'nombre' => 'Cambiada']);
+
+        $this->actingAs($otro)->delete(route('categorias.destroy', $categoria))->assertRedirect();
+        $this->assertModelMissing($categoria);
+    }
+
+    public function test_no_permite_crear_categoria_duplicada_aunque_sea_de_otro_usuario(): void
+    {
+        Categoria::create(['user_id' => User::factory()->create()->id, 'nombre' => 'Salario', 'tipo' => 'ingreso']);
+        $otro = User::factory()->create();
+
+        $this->actingAs($otro)->post(route('categorias.store'), ['nombre' => 'Salario', 'tipo' => 'ingreso'])
+            ->assertSessionHasErrors('nombre');
+        $this->actingAs($otro)->post(route('categorias.store'), ['nombre' => '  salario  ', 'tipo' => 'ingreso'])
+            ->assertSessionHasErrors('nombre');
+
+        $this->assertSame(1, Categoria::where('tipo', 'ingreso')->count());
+    }
+
+    public function test_permite_el_mismo_nombre_con_tipo_distinto(): void
+    {
+        Categoria::create(['user_id' => User::factory()->create()->id, 'nombre' => 'Otros', 'tipo' => 'ingreso']);
+
+        $this->actingAs(User::factory()->create())->post(route('categorias.store'), ['nombre' => 'Otros', 'tipo' => 'gasto'])
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('categorias', ['nombre' => 'Otros', 'tipo' => 'gasto']);
+    }
+
+    public function test_no_permite_renombrar_a_un_nombre_existente_y_permite_conservar_el_propio(): void
+    {
+        $usuario = User::factory()->create();
+        Categoria::create(['user_id' => $usuario->id, 'nombre' => 'Transporte', 'tipo' => 'gasto']);
+        $categoria = Categoria::create(['user_id' => $usuario->id, 'nombre' => 'Luz', 'tipo' => 'gasto']);
+
+        $this->actingAs($usuario)->put(route('categorias.update', $categoria), ['nombre' => 'transporte', 'tipo' => 'gasto'])
+            ->assertSessionHasErrors('nombre');
+
+        $this->actingAs($usuario)->put(route('categorias.update', $categoria), ['nombre' => 'Luz', 'tipo' => 'gasto', 'descripcion' => 'Electricidad'])
+            ->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('categorias', ['id' => $categoria->id, 'descripcion' => 'Electricidad']);
     }
 
     public function test_reportes_exportan_csv_y_pdf(): void

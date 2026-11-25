@@ -461,14 +461,16 @@ class IntegracionFinanzasTest extends TestCase
         $this->assertDatabaseMissing('movimientos_financieros', ['user_id' => $otro->id]);
     }
 
-    public function test_la_pagina_de_categorias_solo_lista_las_del_usuario(): void
+    public function test_la_pagina_de_categorias_muestra_las_categorias_de_toda_la_empresa(): void
     {
-        $this->categoria(User::factory()->create(), 'Categoría ajena', 'gasto');
+        $ajena = $this->categoria(User::factory()->create(), 'Categoría ajena', 'gasto');
 
         $this->actingAs($this->usuario)->get(route('categorias.index'))
             ->assertOk()
             ->assertSee('Insumos')
-            ->assertDontSee('Categoría ajena');
+            ->assertSee('Categoría ajena')
+            ->assertSee('editar-'.$ajena->id, false)
+            ->assertDontSee('Solo lectura');
     }
 
     public function test_no_se_puede_cambiar_el_tipo_de_una_categoria_con_movimientos(): void
