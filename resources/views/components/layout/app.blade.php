@@ -23,7 +23,7 @@
     @stack('styles')
 </head>
 <body class="bg-light">
-    <div class="d-flex min-vh-100 flex-column">
+    <div id="app-shell" class="d-flex min-vh-100 flex-column">
 
         <x-layout.navbar :user="auth()->user()" />
 

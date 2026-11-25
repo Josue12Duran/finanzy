@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\AuditLogger;
 use App\Services\DatabaseBackupService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -15,8 +16,12 @@ class CopiaSeguridadController extends Controller
         return view('copias-seguridad.index');
     }
 
-    public function download(DatabaseBackupService $backups): BinaryFileResponse
+    public function download(Request $request, DatabaseBackupService $backups): BinaryFileResponse
     {
+        $downloadToken = $request->validate([
+            'download_token' => ['required', 'uuid'],
+        ])['download_token'];
+
         $path = $backups->create();
         $deleteImmediately = true;
 
@@ -27,6 +32,17 @@ class CopiaSeguridadController extends Controller
                     'X-Content-Type-Options' => 'nosniff',
                 ])
                 ->deleteFileAfterSend();
+            $response->headers->setCookie(cookie(
+                'backup_download_started',
+                $downloadToken,
+                1,
+                '/',
+                null,
+                $request->isSecure(),
+                false,
+                false,
+                'lax',
+            ));
 
             AuditLogger::log(
                 'descargar',

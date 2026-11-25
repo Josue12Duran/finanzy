@@ -125,6 +125,19 @@ describe('registrarEstadoDeCarga', () => {
         assert.equal(evento.cancelado, false);
     });
 
+    test('el evento de fin de carga restablece el botón de un formulario de descarga', () => {
+        const documento = documentoSimulado();
+        registrarEstadoDeCarga(documento, ventanaSimulada());
+        const boton = elementoSimulado('BUTTON', { loadingText: 'Generando copia…' });
+        activarCarga(boton, documento);
+
+        documento.oyentes['finanzy:loading-complete']({ target: boton });
+
+        assert.equal(boton.disabled, false);
+        assert.equal(boton.innerHTML, 'Generar reporte');
+        assert.equal(boton.dataset.cargando, undefined);
+    });
+
     test('un enlace de descarga se bloquea y se restablece tras unos segundos', () => {
         const documento = documentoSimulado();
         const ventana = ventanaSimulada();

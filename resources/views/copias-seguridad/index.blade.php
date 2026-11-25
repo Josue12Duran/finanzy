@@ -12,9 +12,10 @@
                         directamente en este navegador; el archivo temporal se elimina al terminar la descarga.
                     </p>
 
-                    <form method="POST" action="{{ route('copias-seguridad.download') }}">
+                    <form id="backup-download-form" method="POST" action="{{ route('copias-seguridad.download') }}" target="backup-download-frame">
                         @csrf
-                        <button type="submit" class="btn btn-primary">
+                        <input type="hidden" name="download_token" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
+                        <button type="submit" class="btn btn-primary" data-loading-text="Generando copia…">
                             <i class="bi bi-download me-1" aria-hidden="true"></i>
                             Generar y descargar copia
                         </button>
@@ -23,4 +24,21 @@
             </div>
         </div>
     </section>
+
+    <div id="backup-download-error" class="alert alert-danger mt-3" role="alert" hidden>
+        No se pudo generar la copia de seguridad. Inténtalo de nuevo.
+    </div>
+
+    <div id="backup-loading-overlay" class="backup-loading-overlay" role="dialog" aria-modal="true"
+         aria-labelledby="backup-loading-title" aria-describedby="backup-loading-description" tabindex="-1" hidden>
+        <div class="bg-white rounded-3 shadow p-4 text-center">
+            <div class="spinner-border text-primary mb-3" aria-hidden="true"></div>
+            <h2 id="backup-loading-title" class="h5">Generando copia de seguridad</h2>
+            <p id="backup-loading-description" class="text-muted mb-0">
+                Espera mientras preparamos el archivo. La página seguirá disponible al iniciar la descarga.
+            </p>
+        </div>
+    </div>
+
+    <iframe id="backup-download-frame" name="backup-download-frame" title="Descarga de copia de seguridad" hidden></iframe>
 </x-layout.app>
