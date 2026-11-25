@@ -25,3 +25,7 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Configuración local de Codex
+/.agents/
+/AGENTS.override.md

@@ -157,4 +157,29 @@ class MovimientosFinancierosEloquentTest extends TestCase
             (string) $otrosIngresos->id => 'Otros (Ingreso)',
         ], $this->fuenteDe($usuario)->categorias());
     }
+
+    public function test_la_distribucion_suma_categorias_del_mismo_nombre_sin_mezclar_sus_filtros_por_id(): void
+    {
+        $primero = User::factory()->create();
+        $segundo = User::factory()->create();
+        $transportePrimero = $this->categoria($primero, 'Transporte', 'gasto');
+        $transporteSegundo = $this->categoria($segundo, 'Transporte', 'gasto');
+        $this->movimiento($transportePrimero, '2026-11-02', 30, 'Traslado del primer usuario');
+        $this->movimiento($transporteSegundo, '2026-11-03', 20, 'Traslado del segundo usuario');
+        $inactivo = $this->movimiento($transporteSegundo, '2026-11-04', 100, 'Traslado inactivo');
+        $inactivo->update(['activo' => false]);
+        $this->movimiento($transportePrimero, '2026-10-31', 200, 'Traslado fuera del periodo');
+
+        $fuente = $this->fuenteDe($primero);
+
+        $this->assertSame(['Transporte' => 50.0], $fuente->gastosPorCategoria($this->noviembre()));
+        $this->assertSame(['Traslado del primer usuario'], array_map(
+            fn ($movimiento) => $movimiento->descripcion,
+            $fuente->movimientos($this->noviembre(), (string) $transportePrimero->id),
+        ));
+        $this->assertSame(['Traslado del segundo usuario'], array_map(
+            fn ($movimiento) => $movimiento->descripcion,
+            $fuente->movimientos($this->noviembre(), (string) $transporteSegundo->id),
+        ));
+    }
 }

@@ -3,8 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Categoria;
+use App\Models\MovimientoFinanciero;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class CategoriasReportesTest extends TestCase
@@ -79,5 +82,73 @@ class CategoriasReportesTest extends TestCase
         ])->assertSessionHasErrors('categoria_id');
 
         $this->assertDatabaseCount('movimientos_financieros', 0);
+    }
+
+    public static function estadosDeMovimiento(): array
+    {
+        return ['activo' => [true], 'inactivo' => [false]];
+    }
+
+    #[DataProvider('estadosDeMovimiento')]
+    public function test_no_elimina_una_categoria_con_historial_aunque_el_movimiento_este_inactivo(bool $activo): void
+    {
+        $usuario = User::factory()->create();
+        $categoria = Categoria::create(['user_id' => $usuario->id, 'nombre' => 'Transporte', 'tipo' => 'gasto']);
+        $movimiento = MovimientoFinanciero::create([
+            'user_id' => $usuario->id,
+            'categoria_id' => $categoria->id,
+            'monto' => '30.00',
+            'fecha' => '2026-11-23',
+            'concepto' => 'Traslado con historial',
+            'activo' => $activo,
+        ]);
+
+        $this->actingAs($usuario)->from(route('categorias.index'))
+            ->delete(route('categorias.destroy', $categoria))
+            ->assertRedirect(route('categorias.index'))
+            ->assertSessionHas('error', 'No se puede eliminar una categoría con movimientos asociados.');
+
+        $this->assertModelExists($categoria);
+        $this->assertModelExists($movimiento);
+        $this->assertSame($categoria->id, $movimiento->fresh()->categoria->id);
+        $this->assertSame($usuario->id, $movimiento->usuario->id);
+        $this->assertSame([$movimiento->id], $categoria->movimientos()->pluck('id')->all());
+        $this->assertSame($activo, $movimiento->fresh()->activo);
+    }
+
+    public function test_el_propietario_puede_eliminar_una_categoria_sin_movimientos(): void
+    {
+        $usuario = User::factory()->create();
+        $categoria = Categoria::create(['user_id' => $usuario->id, 'nombre' => 'Sin uso', 'tipo' => 'gasto']);
+
+        $this->actingAs($usuario)->from(route('categorias.index'))
+            ->delete(route('categorias.destroy', $categoria))
+            ->assertRedirect(route('categorias.index'))
+            ->assertSessionHas('success', 'Categoría eliminada.');
+
+        $this->assertModelMissing($categoria);
+    }
+
+    public function test_la_clave_foranea_impide_eliminar_directamente_una_categoria_con_movimientos(): void
+    {
+        $usuario = User::factory()->create();
+        $categoria = Categoria::create(['user_id' => $usuario->id, 'nombre' => 'Transporte', 'tipo' => 'gasto']);
+        $movimiento = MovimientoFinanciero::create([
+            'user_id' => $usuario->id,
+            'categoria_id' => $categoria->id,
+            'monto' => '20.00',
+            'fecha' => '2026-11-23',
+            'concepto' => 'Historial protegido por la base',
+        ]);
+
+        try {
+            $categoria->delete();
+            $this->fail('La clave foránea debe impedir la eliminación del historial.');
+        } catch (QueryException $exception) {
+            $this->assertSame('23000', $exception->getCode());
+        }
+
+        $this->assertModelExists($categoria);
+        $this->assertModelExists($movimiento);
     }
 }

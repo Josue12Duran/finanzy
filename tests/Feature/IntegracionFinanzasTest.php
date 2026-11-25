@@ -329,6 +329,9 @@ class IntegracionFinanzasTest extends TestCase
             'concepto' => 'Compra para editar',
         ]);
 
+        $this->actingAs($gerente);
+        $this->comprobarTotalesDeNoviembre(1555.90, 3444.10, 31.1);
+
         $this->actingAs($gerente)->put(route('movimientos.update', $movimiento), [
             'tipo' => 'gasto',
             'movimiento_id' => $movimiento->id,
@@ -345,6 +348,8 @@ class IntegracionFinanzasTest extends TestCase
             'activo' => true,
         ]);
 
+        $this->comprobarTotalesDeNoviembre(1560.0, 3440.0, 31.2);
+
         $this->actingAs($gerente)->delete(route('movimientos.destroy', $movimiento))
             ->assertRedirect(route('gastos.index'));
 
@@ -358,6 +363,8 @@ class IntegracionFinanzasTest extends TestCase
         $this->actingAs($gerente)->get('/reportes?tipo=anual&fecha_inicio=2026&fecha_fin=2026')
             ->assertDontSee('Compra actualizada');
 
+        $this->comprobarTotalesDeNoviembre(1510.0, 3490.0, 30.2);
+
         $this->actingAs($gerente)->patch(route('movimientos.activar', $movimiento))
             ->assertRedirect(route('gastos.index'));
 
@@ -365,6 +372,8 @@ class IntegracionFinanzasTest extends TestCase
             'id' => $movimiento->id,
             'activo' => true,
         ]);
+
+        $this->comprobarTotalesDeNoviembre(1560.0, 3440.0, 31.2);
 
         $this->assertDatabaseHas('activity_logs', [
             'user_id' => $gerente->id,
@@ -385,6 +394,30 @@ class IntegracionFinanzasTest extends TestCase
             'description' => "Reactivó movimiento #{$movimiento->id}: concepto «Compra actualizada», categoría «Insumos», monto 50.00, fecha 2026-11-13.",
         ]);
         $this->assertDatabaseCount('activity_logs', 3);
+    }
+
+    private function comprobarTotalesDeNoviembre(float $gastos, float $resultado, float $porcentaje): void
+    {
+        $periodo = 'fecha_inicio=2026-11-01&fecha_fin=2026-11-30';
+        $resumen = $this->get('/dashboard?'.$periodo)->assertOk()->viewData('resumen');
+        $this->assertSame(5000.0, $resumen['ingresos']['monto']);
+        $this->assertSame($gastos, $resumen['gastos']['monto']);
+        $this->assertSame($resultado, $resumen['balance']['monto']);
+        $this->assertSame($porcentaje, $resumen['porcentajeGastos']);
+
+        $reporte = $this->get('/reportes?tipo=diario&'.$periodo)->assertOk()->viewData('reporte');
+        $this->assertSame(5000.0, $reporte['ingresos']);
+        $this->assertSame($gastos, $reporte['gastos']);
+        $this->assertSame($resultado, $reporte['resultado']);
+        $this->assertSame($porcentaje, $reporte['porcentajeGastos']);
+
+        $totales = ['Ingreso' => 0.0, 'Gasto' => 0.0];
+        foreach (array_slice($this->lineasDelCsv('?tipo=diario&'.$periodo), 1) as $linea) {
+            $campos = str_getcsv($linea, ';');
+            $totales[$campos[1]] += (float) $campos[4];
+        }
+
+        $this->assertSame(['Ingreso' => 5000.0, 'Gasto' => $gastos], $totales);
     }
 
     public function test_el_registro_valida_el_monto_la_fecha_y_el_concepto(): void
